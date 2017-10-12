@@ -8,37 +8,34 @@
 */
 if ( ! class_exists( 'CZR_resources_styles' ) ) :
    class CZR_resources_styles {
-         //Access any method or var of the class with classname::$instance -> var or method():
-         static $instance;
+        //Access any method or var of the class with classname::$instance -> var or method():
+        static $instance;
 
-         private $_is_css_minified;
-         private $_resources_version;
+        private $_is_css_minified;
+        private $_resources_version;
 
-         function __construct () {
+        function __construct () {
+            self::$instance =& $this;
+            //setup version param and is_css_minified bool
+            add_action( 'after_setup_theme'                   , array( $this , 'czr_fn_setup_properties' ), 20 );
+            add_action( 'wp_enqueue_scripts'                  , array( $this , 'czr_fn_enqueue_front_styles' ) );
 
-               self::$instance =& $this;
+            add_filter( 'czr_user_options_style'              , array( $this , 'czr_fn_maybe_write_skin_inline_css') );
+            add_filter( 'czr_user_options_style'              , array( $this , 'czr_fn_maybe_write_header_custom_skin_inline_css') );
 
-               //setup version param and is_css_minified bool
-               add_action( 'after_setup_theme'                   , array( $this, 'czr_fn_setup_properties' ), 20 );
-
-               add_action( 'wp_enqueue_scripts'                  , array( $this , 'czr_fn_enqueue_front_styles' ) );
-
-               add_filter( 'czr_user_options_style'              , array( $this , 'czr_fn_write_custom_css') , apply_filters( 'czr_custom_css_priority', 9999 ) );
-
-               add_filter( 'czr_user_options_style'              , array( $this , 'czr_fn_maybe_write_skin_inline_css') );
-
-         }
+            add_filter( 'czr_user_options_style'              , array( $this , 'czr_fn_write_custom_css') , apply_filters( 'czr_custom_css_priority', 9999 ) );
+        }
 
 
-         //hook: after_setup_theme
-         function czr_fn_setup_properties() {
+        //hook: after_setup_theme
+        function czr_fn_setup_properties() {
 
-               $this->_resouces_version        = CZR_DEBUG_MODE || CZR_DEV_MODE ? CUSTOMIZR_VER . time() : CUSTOMIZR_VER;
+              $this->_resouces_version        = CZR_DEBUG_MODE || CZR_DEV_MODE ? CUSTOMIZR_VER . time() : CUSTOMIZR_VER;
 
-               $this->_is_css_minified              = CZR_DEBUG_MODE || CZR_DEV_MODE ? false : true ;
-               $this->_is_css_minified              = esc_attr( czr_fn_opt( 'tc_minified_skin' ) ) ? $this->_is_css_minified : false;
+              $this->_is_css_minified              = CZR_DEBUG_MODE || CZR_DEV_MODE ? false : true ;
+              $this->_is_css_minified              = esc_attr( czr_fn_opt( 'tc_minified_skin' ) ) ? $this->_is_css_minified : false;
 
-         }
+        }
 
 
 
@@ -48,31 +45,33 @@ if ( ! class_exists( 'CZR_resources_styles' ) ) :
          * @since Customizr 1.1
          */
          function czr_fn_enqueue_front_styles() {
+              $_path       = CZR_ASSETS_PREFIX . 'front/css/';
+              $_ver        = $this->_resouces_version;
+              $_ext        = $this->_is_css_minified ? '.min.css' : '.css';
 
-               $_path       = CZR_ASSETS_PREFIX . 'front/css/';
+              wp_enqueue_style( 'customizr-flickity'       , czr_fn_get_theme_file_url( "{$_path}flickity{$_ext}" ), array(), $_ver, 'all' );
+              wp_enqueue_style( 'customizr-magnific'       , czr_fn_get_theme_file_url( "{$_path}magnific-popup{$_ext}" ), array(), $_ver, 'all' );
+              wp_enqueue_style( 'customizr-scrollbar'      , czr_fn_get_theme_file_url( "{$_path}jquery.mCustomScrollbar.min.css" ), array(), $_ver, 'all' );
 
-               $_ver        = $this->_resouces_version;
+              $main_theme_file_name  = is_rtl() ? 'rtl' : 'style';
 
-               $_ext        = $this->_is_css_minified ? '.min.css' : '.css';
-
-               wp_enqueue_style( 'customizr-bs'             , czr_fn_get_theme_file_url( "{$_path}custom-bs/custom-bootstrap{$_ext}" ) , array(), $_ver, 'all' );
-
-               wp_enqueue_style( 'customizr-flickity'       , czr_fn_get_theme_file_url( "{$_path}flickity{$_ext}" ), array(), $_ver, 'all' );
-
-               wp_enqueue_style( 'customizr-magnific'       , czr_fn_get_theme_file_url( "{$_path}magnific-popup{$_ext}" ), array(), $_ver, 'all' );
-
-               wp_enqueue_style( 'customizr-scrollbar'      , czr_fn_get_theme_file_url( "{$_path}jquery.mCustomScrollbar.min.css" ), array(), $_ver, 'all' );
-
-               //Customizr main stylesheet
-               wp_enqueue_style( 'customizr-common'         , czr_fn_get_theme_file_url( "{$_path}style{$_ext}"), array(), $_ver, 'all' );
+              //Customizr main stylesheets
+              wp_enqueue_style( 'customizr-main'         , czr_fn_get_theme_file_url( "{$_path}{$main_theme_file_name}{$_ext}"), array(), $_ver, 'all' );
 
 
-               //Customizer user defined style options : the custom CSS is written with a high priority here
-               wp_add_inline_style( 'customizr-common'      , apply_filters( 'czr_user_options_style' , '' ) );
+              //Modular scale resopnd
+              //Customizr main stylesheet
+              if ( 1 == esc_attr( czr_fn_opt( 'tc_ms_respond_css' ) ) ) {
+                  wp_enqueue_style( 'customizr-ms-respond'     , czr_fn_get_theme_file_url( "{$_path}style-modular-scale{$_ext}"), array(), $_ver, 'all' );
+              }
 
-               //Customizr stylesheet (style.css)
-               wp_enqueue_style( 'customizr-style'          , czr_fn_get_theme_file_url( "style{$_ext}"), array(), $_ver, 'all' );
+              //Customizer user defined style options : the custom CSS is written with a high priority here
+              wp_add_inline_style( 'customizr-main'      , apply_filters( 'czr_user_options_style' , '' ) );
 
+              //Customizr stylesheet (style.css)
+              if ( czr_fn_is_child() ) {
+                  wp_enqueue_style( 'customizr-style'          , czr_fn_get_theme_file_url( "style.css"), array(), $_ver, 'all' );
+              }
          }
 
          /**
@@ -122,6 +121,208 @@ if ( ! class_exists( 'CZR_resources_styles' ) ) :
          }
 
 
+         //hook : czr_user_options_style
+         function czr_fn_maybe_write_header_custom_skin_inline_css( $_css ) {
+               //retrieve the current option
+               $skin_color                             = czr_fn_opt( 'tc_header_skin' );
+
+               if ( 'custom' != $skin_color )
+                     return $_css;
+
+               //retrieve the current option
+               $header_bg_color                        = czr_fn_opt( 'tc_header_custom_bg_color' );
+               $header_fg_color                        = czr_fn_opt( 'tc_header_custom_fg_color' );
+
+               $header_bg_inverted_color               = czr_fn_hex_invert( $header_bg_color );
+
+               //shaded
+               $header_bg_inverted_color_shade_highest = czr_fn_hex2rgba( $header_bg_inverted_color, 0.045, $array = false, $make_prop_value = true );
+
+               $header_bg_color_shade_low              = czr_fn_hex2rgba( $header_bg_color, 0.9, $array = false, $make_prop_value = true );
+               $header_bg_color_shade_lowest           = czr_fn_hex2rgba( $header_bg_color, 0.98, $array = false, $make_prop_value = true );
+
+               $header_fg_color_shade_very_high        = czr_fn_hex2rgba( $header_fg_color, 0.09, $array = false, $make_prop_value = true );
+               $header_fg_color_shade_highest          = czr_fn_hex2rgba( $header_fg_color, 0.075, $array = false, $make_prop_value = true );
+
+               //in header _skins.scss this is the $secondary_color which is $grey-light or $grey-dark depending on whether
+               //the header skin is light or dark, so it's constant and not depending on the primary color.
+               //This color is used for the tagline color, the menu items hover color etc.
+               //In the dynamic skin we want to refer everything to two colors: foreground and backgorund that's why we use a shdaded version
+               //of the foreground color.
+               //Also consider that $grey-dark, for our settings is the same as $grey, and the $secondary-color-light is always $grey-light
+               //So since here we don't differentiate between $grey-light and $grey-dark, we'll use the following color for the $secondary-color-light too.
+               //TODO: unify this in the header _skins.scss too?!
+               $header_fg_color_shade_low              = czr_fn_hex2rgba( $header_fg_color, 0.7, $array = false, $make_prop_value = true );
+
+               //LET'S DANCE
+               //start computing style
+               $header_skin                            = array();
+               $glue                                   = $this->_is_css_minified || esc_attr( czr_fn_opt( 'tc_minified_skin' ) ) ? '' : "\n";
+
+               $header_skin_style_map                  = array(
+
+                     'header_fg_color' => array(
+                           'color'  => $header_fg_color,
+                           'rules'  => array(
+                                 //prop => selectors
+                                 'color'  => array(
+                                       '.tc-header',
+                                       '#tc-sn .tc-sn-inner',
+                                       '.czr-overlay',
+                                       '.add-menu-button',
+                                       '.tc-header .socials a',
+                                       '.tc-header .socials a:focus',
+                                       '.tc-header .socials a:active',
+                                       '.nav__utils',
+                                       '.nav__utils a',
+                                       '.nav__utils a:focus',
+                                       '.nav__utils a:active',
+                                       '.czr-overlay a:hover',
+                                       '.dropdown-menu',
+                                       '.tc-header .navbar-brand-sitename',
+                                       '[class*=nav__menu] li > a',
+                                       '[class*=nav__menu] .dropdown-menu a',
+                                       '[class*=nav__menu] .dropdown-item > a:hover',
+                                       '.tc-header .czr-form label',
+                                       '.czr-overlay .czr-form label',
+                                       ".tc-header .czr-form input:not([type='submit']):not([type='button']):not([type='number']):not([type='checkbox']):not([type='radio'])",
+                                       '.tc-header .czr-form textarea',
+                                       '.tc-header .czr-form .form-control',
+                                       ".czr-overlay .czr-form input:not([type='submit']):not([type='button']):not([type='number']):not([type='checkbox']):not([type='radio'])",
+                                       '.czr-overlay .czr-form textarea',
+                                       '.czr-overlay .czr-form .form-control',
+                                       '.tc-header h1',
+                                       '.tc-header h2',
+                                       '.tc-header h3',
+                                       '.tc-header h4',
+                                       '.tc-header h5',
+                                       '.tc-header h6',
+                                 ),
+                                 'border-color' => array(
+                                       ".tc-header .czr-form input:not([type='submit']):not([type='button']):not([type='number']):not([type='checkbox']):not([type='radio'])",
+                                       '.tc-header .czr-form textarea',
+                                       '.tc-header .czr-form .form-control',
+                                       ".czr-overlay .czr-form input:not([type='submit']):not([type='button']):not([type='number']):not([type='checkbox']):not([type='radio'])",
+                                       '.czr-overlay .czr-form textarea',
+                                       '.czr-overlay .czr-form .form-control'
+                                 ),
+                                 'background-color' => array(
+                                       '.ham__toggler-span-wrapper .line',
+                                       '[class*=nav__menu] li > a > span:first-of-type::before',
+                                       '.tc-header .navbar-brand-sitename.czr-underline span::after'
+                                 )
+                           )
+                     ),
+                     'header_fg_color_shade_low' => array(
+                           'color'  => $header_fg_color_shade_low,
+                           'rules'  => array(
+                                 //prop => selectors
+                                 'color' => array(
+                                         '.header-tagline',
+                                         '[class*=nav__menu] li > a:hover',
+                                         '[class*=nav__menu] li.show:not(.dropdown-item) > a',
+                                         '[class*=nav__menu] li:not(.dropdown-item).current-active > a',
+                                         '[class*=nav__menu] li.current-menu-item > a',
+                                         '[class*=nav__menu] .dropdown-item a',
+                                         '.czr-overlay a',
+                                         '.tc-header .socials a:hover',
+                                         '.nav__utils a:hover',
+                                         '.nav__utils a.current-active',
+                                         '.tc-header .czr-form .form-group.in-focus label',
+                                         '.czr-overlay .czr-form .form-group.in-focus label'
+                                 ),
+                                 'background-color' => array(
+                                         '.nav__utils .ham-toggler-menu.collapsed:hover .line',
+                                 )
+                           )
+                     ),
+                     'header_fg_color_shade_very_high' => array(
+                           'color'  => $header_fg_color_shade_very_high,
+                           'rules'  => array(
+                                 //prop => selectors
+                                 'border-color' => array(
+                                         '.topbar-navbar__wrapper',
+                                         '.header-navbars__wrapper',
+                                         '.dropdown-item:not(:last-of-type)'
+                                 ),
+                                 'outline-color' => array(
+                                         '#tc-sn'
+                                 )
+                           )
+                     ),
+                     'header_fg_color_shade_highest' => array(
+                           'color'  => $header_fg_color_shade_highest,
+                           'rules'  => array(
+                                 //prop => selectors
+                                 'border-color' => array(
+                                         '.mobile-nav__container',
+                                         '.mobile-search__container',
+                                         '.mobile-nav__nav',
+                                         '.vertical-nav > li:not(:last-of-type)'
+                                 ),
+                           )
+                     ),
+                     'header_bg_color' => array(
+                           'color'  => $header_bg_color,
+                           'rules'  => array(
+                                 //prop => selectors
+                                 'background-color' => array(
+                                       '.tc-header',
+                                       '#tc-sn .tc-sn-inner',
+                                       '.dropdown-menu',
+                                       '.dropdown-item:active',
+                                       '.dropdown-item:focus',
+                                       '.dropdown-item:hover'
+                                 )
+                           )
+                     ),
+                     'header_bg_color_shade_low' => array(
+                           'color'  => $header_bg_color_shade_low,
+                           'rules'  => array(
+                                 //prop => selectors
+                                 'background-color' => array(
+                                       '.sticky-transparent.is-sticky .mobile-sticky',  //the alpha param is actually set at 0.7 for the dark_skin in the header skin scss, here we set it always at 0.9 which is the value used for the light skin
+                                       '.sticky-transparent.is-sticky .desktop-sticky', //the alpah param is actually set at 0.7 for the dark_skin in the header skin scss, here we set it always at 0.9 which is the value used for the light skin
+                                       '.sticky-transparent.is-sticky .mobile-nav__nav'
+                                 )
+                           )
+                     ),
+                     'header_bg_color_shade_lowest' => array(
+                           'color'  => $header_bg_color_shade_lowest,
+                           'rules'  => array(
+                                 //prop => selectors
+                                 'background-color' => array(
+                                       '.czr-overlay',
+                                 )
+                           )
+                     ),
+                     'header_bg_inverted_color_shade_highest' => array(
+                           'color'  => $header_bg_inverted_color_shade_highest,
+                           'rules'  => array(
+                                 //prop => selectors
+                                 'background-color' => array(
+                                       '.dropdown-item:before',
+                                 )
+                           )
+                     ),
+               );
+
+               $header_skin  = self::czr_fn_build_inline_style_from_map( $header_skin_style_map, $glue );
+
+
+               // end computing
+               if ( empty ( $header_skin ) ) {
+                     return $_css;
+               }
+
+               //LET's GET IT ON
+               $header_skin  = implode( "{$glue}{$glue}", $header_skin );
+
+               return $_css . $header_skin;
+         }
+
+
+         //@return string
          function czr_fn_maybe_write_skin_inline_css( $_css ) {
 
                //retrieve the current option
@@ -133,7 +334,7 @@ if ( ! class_exists( 'CZR_resources_styles' ) ) :
                $def_skin_color                 = isset( $defaults['tc_skin_color'] ) ? $defaults['tc_skin_color'] : false;
 
                if ( in_array( $def_skin_color, array( $skin_color, strtoupper( $skin_color) ) ) )
-                     return;
+                     return $_css;
 
                $skin_dark_color                = czr_fn_darken_hex( $skin_color, '12%' );
                $skin_light_color               = czr_fn_lighten_hex( $skin_color, '15%' );
@@ -165,9 +366,10 @@ if ( ! class_exists( 'CZR_resources_styles' ) ) :
                                        '.post-type__icon:hover .icn-format',
                                        '.grid-container__classic .post-type__icon:hover .icn-format',
                                        "[class*='grid-container__'] .entry-title a.czr-title:hover",
+                                       'input[type=checkbox]:checked::before',
                                  ),
                                  'border-color' => array(
-                                       '.czr-slider-loader-wrapper .czr-css-loader > div ',
+                                       '.czr-css-loader > div ',
                                        '.btn-skin',
                                        '.btn-skin:active',
                                        '.btn-skin:focus',
@@ -189,6 +391,8 @@ if ( ! class_exists( 'CZR_resources_styles' ) ) :
                                        '.btn-skin-h-dark.inverted:active',
                                        '.btn-skin-h-dark.inverted:focus',
                                        '.btn-skin-h-dark.inverted:hover',
+                                       '.sidebar .widget-title::after',
+                                       'input[type=radio]:checked::before'
                                  )
                            )
                      ),
@@ -205,6 +409,8 @@ if ( ! class_exists( 'CZR_resources_styles' ) ) :
                                  ),
 
                                  'border-color' => array(
+                                       "input:not([type='submit']):not([type='button']):not([type='number']):not([type='checkbox']):not([type='radio']):focus",
+                                       'textarea:focus',
                                        '.btn-skin-light',
                                        '.btn-skin-light.inverted',
                                        '.btn-skin-light:active',
@@ -255,16 +461,6 @@ if ( ! class_exists( 'CZR_resources_styles' ) ) :
                            )
                      ),
 
-                     'skin_lightest_color_shade_high' => array(
-                           'color'  => $skin_lightest_color_shade_high,
-                           'rules'  => array(
-                                 'background-color' => array(
-                                       '.post-navigation',
-                                 )
-                           )
-                     ),
-
-
                      'skin_dark_color' => array(
                            'color'  => $skin_dark_color,
                            'rules'  => array(
@@ -287,7 +483,12 @@ if ( ! class_exists( 'CZR_resources_styles' ) ) :
                                        '.widget-area a:not(.btn):hover',
                                        'a.czr-format-link:hover',
                                        '.format-link.hover a.czr-format-link',
+                                       'button[type=submit]:hover',
+                                       'button[type=submit]:active',
+                                       'button[type=submit]:focus',
                                        'input[type=submit]:hover',
+                                       'input[type=submit]:active',
+                                       'input[type=submit]:focus',
                                        '.tabs .nav-link:hover',
                                        '.tabs .nav-link.active',
                                        '.tabs .nav-link.active:hover',
@@ -298,6 +499,7 @@ if ( ! class_exists( 'CZR_resources_styles' ) ) :
                                        '.grid-container__classic.tc-grid-border .grid__item',
                                        '.btn-skin-dark',
                                        '.btn-skin-dark.inverted',
+                                       'button[type=submit]',
                                        'input[type=submit]',
                                        '.btn-skin-dark:active',
                                        '.btn-skin-dark:focus',
@@ -317,7 +519,12 @@ if ( ! class_exists( 'CZR_resources_styles' ) ) :
                                        '.btn-skin-dark-oh.inverted:active',
                                        '.btn-skin-dark-oh.inverted:focus',
                                        '.btn-skin-dark-oh.inverted:hover',
+                                       'button[type=submit]:hover',
+                                       'button[type=submit]:active',
+                                       'button[type=submit]:focus',
                                        'input[type=submit]:hover',
+                                       'input[type=submit]:active',
+                                       'input[type=submit]:focus',
 
                                  ),
 
@@ -336,6 +543,7 @@ if ( ! class_exists( 'CZR_resources_styles' ) ) :
                                        '.btn-skin-dark-oh.inverted:focus',
                                        '.btn-skin-dark-oh.inverted:hover',
                                        '.grid-container__classic .post-type__icon:hover',
+                                       'button[type=submit]',
                                        'input[type=submit]',
                                        '.widget-area .widget:not(.widget_shopping_cart) a:not(.btn):before',
                                        "[class*='grid-container__'] .hover .entry-title a::after",
@@ -379,15 +587,36 @@ if ( ! class_exists( 'CZR_resources_styles' ) ) :
                $skin[]  = '::-moz-selection{background-color:'. $skin_color .'}';
                $skin[]  = '::selection{background-color:'. $skin_color .'}';
 
+               $skin    = array_merge( $skin, self::czr_fn_build_inline_style_from_map( $skin_style_map, $glue ) );
+
+               // end computing
+               if ( empty ( $skin ) ) {
+                     return $_css;
+               }
+
+               //LET's GET IT ON
+               $skin    = implode( "{$glue}{$glue}", $skin );
+
+               return $_css . $skin;
+         }
+
+         //@return string
+         public static function czr_fn_build_inline_style_from_map( $style_map = array(), $glue = '') {
+
+               $style = array();
+
+               if ( empty( $style_map ) )
+                     return $style;
+
                //Builder
-               foreach ( $skin_style_map as $skin_color => $params ) {
+               foreach ( $style_map as $color => $params ) {
 
                      foreach ( $params['rules'] as $prop => $selectors ) {
 
-                           $_selectors = implode( ",{$glue}", apply_filters( "czr_dynamic_{$skin_color}_{$prop}_prop_selectors", $selectors ) );
+                           $_selectors = implode( ",{$glue}", apply_filters( "czr_dynamic_{$color}_{$prop}_prop_selectors", $selectors ) );
 
                            if ( $_selectors ) {
-                                 $skin[] = sprintf( '%1$s{%2$s:%3$s}',
+                                 $style[] = sprintf( '%1$s{%2$s:%3$s}',
                                        $_selectors,
                                        $prop, //property
                                        $params['color'] //color
@@ -396,17 +625,11 @@ if ( ! class_exists( 'CZR_resources_styles' ) ) :
 
                      }//end foreach $param['rules'] as ...
 
-               }//end foreach $skinner as ...
+               }//end foreach $style_map as ...
 
-               // end computing
-               if ( empty ( $skin ) ) {
-                     return;
-               }
-
-               //LET's GET IT ON
-               return implode( "{$glue}{$glue}", $skin );
-
+               return $style;
          }
+
 
    }//end of CZR_resources_styles
 endif;

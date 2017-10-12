@@ -125,8 +125,8 @@ class CZR_post_metas_model_class extends CZR_Model {
         'tc_author_meta',
         sprintf( '<span class="author vcard author_name"><a class="url fn n" href="%1$s" title="%2$s" rel="author">%3$s</a></span>' ,
             esc_url( get_author_posts_url( get_the_author_meta( 'ID', $author_id ) ) ),
-            esc_attr( sprintf( __( 'View all posts by %s' , 'customizr' ), get_the_author_meta('nicename', $author_id ) ) ),
-            get_the_author_meta('nicename', $author_id )
+            esc_attr( sprintf( __( 'View all posts by %s' , 'customizr' ), get_the_author_meta( 'display_name', $author_id ) ) ),
+            get_the_author_meta( 'display_name', $author_id )
         )
     );//end filter
   }
@@ -276,9 +276,9 @@ class CZR_post_metas_model_class extends CZR_Model {
        $_classes[] = 'hide-all-post-metas';
 
     if (
-        ( is_singular() && ! is_page() && ! czr_fn_is_home() && 0 == esc_attr( czr_fn_opt( 'tc_show_post_metas_single_post' ) ) ) ||
-        ( ! is_singular() && ! czr_fn_is_home() && ! is_page() && 0 == esc_attr( czr_fn_opt( 'tc_show_post_metas_post_lists' ) ) ) ||
-        ( czr_fn_is_home() ) && 0 == esc_attr( czr_fn_opt( 'tc_show_post_metas_home' ) )
+        ( is_singular() && ! is_page() && ! czr_fn_is_real_home() && 0 == esc_attr( czr_fn_opt( 'tc_show_post_metas_single_post' ) ) ) ||
+        ( ! is_singular() && ! czr_fn_is_real_home() && ! is_page() && 0 == esc_attr( czr_fn_opt( 'tc_show_post_metas_post_lists' ) ) ) ||
+        ( czr_fn_is_real_home() ) && 0 == esc_attr( czr_fn_opt( 'tc_show_post_metas_home' ) )
     )
       $_classes[] = 'hide-post-metas';
 

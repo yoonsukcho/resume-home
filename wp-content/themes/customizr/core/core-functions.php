@@ -1,19 +1,4 @@
 <?php
-/*
- * @since 3.5.0
- */
-if ( ! function_exists( 'czr_fn_is_modern_style' ) ) {
-      function czr_fn_is_modern_style() {
-            //do not allow theme style switching via $_GET param czr_modern_style when is Pro
-            if ( isset( $_GET['czr_modern_style'] ) && true == $_GET['czr_modern_style'] && !czr_fn_is_pro() )
-              $_czr_is_modern_style = true;
-            else
-              $_czr_is_modern_style = defined( 'CZR_MODERN_STYLE' ) ? CZR_MODERN_STYLE : false;
-
-            return apply_filters( 'czr_is_modern_style', $_czr_is_modern_style );
-      }
-}
-
 
 /**
 * The czr_fn__f() function is a wrapper of the WP built-in apply_filters() where the $value param becomes optional.
@@ -41,8 +26,58 @@ if( ! function_exists( 'tc__f' ) ) :
     }
 endif;
 
+/*
+ * @since 3.5.0
+ */
+if ( ! function_exists( 'czr_fn_is_ms' ) ) {
+      function czr_fn_is_ms() {
+          $is_modern_style = true;
+          if ( ! czr_fn_isprevdem() ) {
+              $_czr_modern_style_option_value = czr_fn_opt( 'tc_style', CZR_THEME_OPTIONS, false );//false for no default
+
+              switch ( $_czr_modern_style_option_value ) {
+                case 'modern':
+                    $is_modern_style = true;
+                  break;
+
+                case 'classic':
+                    $is_modern_style = false;
+                  break;
+
+                default :
+                  //the modern option is not set
+                  //=> if version is > 4.0 for free or 2.0 for free, it is true for a fresh install
+                  //free to free or pro to pro
+                  if ( CZR_IS_PRO ) {
+                      //if user started using the pro before 2.0
+                      if ( czr_fn_user_started_before_version( '4.0.0' , '2.0.0', 'pro' ) ) {
+                          $is_modern_style = false;
+                      } else {
+                        if ( czr_fn_user_started_before_version( '4.0.0' , '2.0.0', 'free' ) ) {
+                          $is_modern_style = false;
+                        }
+                      }
+                  } else {
+                      $is_modern_style = ! czr_fn_user_started_before_version( '4.0.0' , '2.0.0', 'free' );
+                  }
+                  break;
+              }
+
+              if ( isset( $_GET['czr_ms'] ) && true == $_GET['czr_ms'] && !czr_fn_is_pro() ) {
+                $is_modern_style = true;
+              } else {
+                $is_modern_style = defined( 'CZR_MODERN_STYLE' ) ? CZR_MODERN_STYLE : $is_modern_style;
+              }
+          }
+          return apply_filters( 'czr_is_modern_style', $is_modern_style );
+      }
+}
+
 if ( ! function_exists( 'czr_fn_setup_constants' ) ):
     function czr_fn_setup_constants() {
+
+        //fire an action hook before constants have been set up
+        do_action( 'czr_before_setup_base_constants' );
 
         /* GETS INFORMATIONS FROM STYLE.CSS */
         // get themedata version wp 3.4+
@@ -71,11 +106,11 @@ if ( ! function_exists( 'czr_fn_setup_constants' ) ):
         //CZR_UTILS_PREFIX is the relative path where the utils classes are located
         if( ! defined( 'CZR_CORE_PATH' ) )            define( 'CZR_CORE_PATH' , 'core/' );
         //CZR_MAIN_TEMPLATES_PATH is the relative path where the czr4 WordPress templates are located
-        if( ! defined( 'CZR_MAIN_TEMPLATES_PATH' ) )  define( 'CZR_MAIN_TEMPLATES_PATH' , 'templates/main-templates/' );
+        if( ! defined( 'CZR_MAIN_TEMPLATES_PATH' ) )  define( 'CZR_MAIN_TEMPLATES_PATH' , 'templates/' );
         //CZR_UTILS_PREFIX is the relative path where the utils classes are located
-        if( ! defined( 'CZR_UTILS_PATH' ) )           define( 'CZR_UTILS_PATH' , 'core/_utils/' );
+        if( ! defined( 'CZR_UTILS_PATH' ) )           define( 'CZR_UTILS_PATH' , 'core/_dev/_utils/' );
         //CZR_FRAMEWORK_PATH is the relative path where the framework is located
-        if( ! defined( 'CZR_FRAMEWORK_PATH' ) )       define( 'CZR_FRAMEWORK_PATH' , 'core/_framework/' );
+        if( ! defined( 'CZR_FRAMEWORK_PATH' ) )       define( 'CZR_FRAMEWORK_PATH' , 'core/_dev/_framework/' );
         //CZR_PHP_FRONT_PATH is the relative path where the framework front files are located
         if( ! defined( 'CZR_PHP_FRONT_PATH' ) )       define( 'CZR_PHP_FRONT_PATH' , 'core/front/' );
         //CZR_ASSETS_PREFIX is the relative path where the assets are located
@@ -123,10 +158,12 @@ if ( ! function_exists( 'czr_fn_setup_constants' ) ):
         //TC_BASE_URL_CHILD http url of the loaded child theme
         if( ! defined( 'TC_BASE_URL_CHILD' ) )  define( 'TC_BASE_URL_CHILD' , CZR_BASE_URL_CHILD );
 
+        //fire an action hook after constants have been set up
+        do_action( 'czr_after_setup_base_constants' );
     }
 endif;
 
-if ( !( function_exists( 'czr_fn_isprevdem' ) ) ) :
+
 //@return bool
 function czr_fn_isprevdem() {
     global $wp_customize;
@@ -141,8 +178,11 @@ function czr_fn_isprevdem() {
     }
     return apply_filters( 'czr_fn_isprevdem', ! $is_dirty && czr_fn_get_raw_option( 'template', null, false ) != get_stylesheet() && ! is_child_theme() && ! czr_fn_is_pro() );
 }
-endif;
 
+//@return bool
+function czr_fn_is_pro_section_on() {
+   return ! CZR_IS_PRO && class_exists( 'CZR_Customize_Section_Pro' ) && ! czr_fn_isprevdem();
+}
 
 
 //@return an array of unfiltered options
@@ -332,11 +372,11 @@ if ( ! function_exists( 'czr_fn_is_customizing' ) ) {
 }
 
 
-
-
-
-
-
+//@return boolean
+//Is used to check if we can display specific notes including deep links to the customizer
+function czr_fn_user_can_see_customize_notices_on_front() {
+    return ! czr_fn_is_customizing() && is_user_logged_in() && current_user_can( 'edit_theme_options' ) && is_super_admin();
+}
 
 
 
@@ -352,13 +392,18 @@ if ( ! function_exists( 'czr_fn_is_customizing' ) ) {
 function czr_fn_opt( $option_name , $option_group = null, $use_default = true ) {
     //do we have to look for a specific group of option (plugin?)
     $option_group = is_null($option_group) ? CZR_THEME_OPTIONS : $option_group;
-    //when customizing, the db_options property is refreshed each time the preview is refreshed in 'customize_preview_init'
-    $_db_options  = empty(CZR___::$db_options) ? czr_fn_cache_db_options() : CZR___::$db_options;
+
+    if ( class_exists( 'CZR___' ) ) {
+        //when customizing, the db_options property is refreshed each time the preview is refreshed in 'customize_preview_init'
+        $_db_options  = empty(CZR___::$db_options) ? czr_fn_cache_db_options() : CZR___::$db_options;
+    } else {
+        $_db_options = false === get_option( $option_group ) ? array() : (array)get_option( $option_group );
+    }
 
     //do we have to use the default ?
     $__options    = $_db_options;
     $_default_val = false;
-    if ( $use_default ) {
+    if ( $use_default && class_exists( 'CZR___' ) ) {
       $_defaults      = CZR___::$default_options;
       if ( isset($_defaults[$option_name]) )
         $_default_val = $_defaults[$option_name];
@@ -431,18 +476,22 @@ function czr_fn_get_default_options() {
     if ( ! empty($def_options) && czr_fn_is_customizing() )
       return apply_filters( 'czr_default_options', $def_options );
 
+    //Never update the defaults when wp_installing()
+    //prevent issue https://github.com/presscustomizr/hueman/issues/571
     //Always update/generate the default option when (OR) :
     // 1) current user can edit theme options
     // 2) they are not defined
     // 3) theme version not defined
     // 4) versions are different
-    if ( current_user_can('edit_theme_options') || empty($def_options) || ! isset($def_options['ver']) || 0 != version_compare( $def_options['ver'] , CUSTOMIZR_VER ) ) {
-      $def_options          = czr_fn_generate_default_options( czr_fn_get_customizer_map( $get_default_option = 'true' ) , CZR_THEME_OPTIONS );
-      //Adds the version in default
-      $def_options['ver']   =  CUSTOMIZR_VER;
+    if ( ! wp_installing() ) {
+        if ( current_user_can('edit_theme_options') || empty($def_options) || ! isset($def_options['ver']) || 0 != version_compare( $def_options['ver'] , CUSTOMIZR_VER ) ) {
+          $def_options          = czr_fn_generate_default_options( czr_fn_get_customizer_map( $get_default_option = 'true' ) , CZR_THEME_OPTIONS );
+          //Adds the version in default
+          $def_options['ver']   =  CUSTOMIZR_VER;
 
-      //writes the new value in db (merging raw options with the new defaults ).
-      czr_fn_set_option( 'defaults', $def_options, CZR_THEME_OPTIONS );
+          //writes the new value in db (merging raw options with the new defaults ).
+          czr_fn_set_option( 'defaults', $def_options, CZR_THEME_OPTIONS );
+        }
     }
 
     return apply_filters( 'czr_default_options', $def_options );
@@ -583,8 +632,12 @@ function czr_fn_is_option_excluded_from_ctx( $opt_name ) {
 * @package Customizr
 * @since Customizr 3.2.9
 */
-function czr_fn_user_started_before_version( $_czr_ver, $_pro_ver = null ) {
-    $_ispro = CZR_IS_PRO;
+function czr_fn_user_started_before_version( $_czr_ver, $_pro_ver = null, $what_to_check = null  ) {
+    if ( is_null( $what_to_check ) ) {
+        $_ispro = CZR_IS_PRO;
+    } else {
+        $_ispro = 'pro' == $what_to_check;
+    }
 
     //the transient is set in CZR___::czr_fn_init_properties()
     $_trans = $_ispro ? 'started_using_customizr_pro' : 'started_using_customizr';
@@ -621,6 +674,25 @@ function czr_fn_user_started_before_version( $_czr_ver, $_pro_ver = null ) {
 }
 
 
+
+//@return bool
+function czr_fn_user_started_with_current_version() {
+    if ( czr_fn_is_pro() )
+      return;
+
+    $_trans = 'started_using_customizr';
+    //the transient is set in CZR___::czr_fn_init_properties()
+    if ( ! get_transient( $_trans ) )
+      return false;
+
+    $_start_version_infos = explode( '|', esc_attr( get_transient( $_trans ) ) );
+
+    //make sure we're good at this point
+    if ( ! is_string( CUSTOMIZR_VER ) || ! is_array( $_start_version_infos ) || count( $_start_version_infos ) < 2 )
+      return false;
+
+    return 'with' == $_start_version_infos[0] && version_compare( $_start_version_infos[1] , CUSTOMIZR_VER, '==' );
+}
 
 
 /**
@@ -1071,15 +1143,23 @@ function czr_fn_regex_callback( $matches ) {
     }
 }
 
+/**
+* helper
+* Check if we are displaying posts lists or front page
+* => not real home
+* @return  bool
+*/
+function czr_fn_is_home() {
+    //get info whether the front page is a list of last posts or a page
+    return is_home() || ( is_home() && ( 'posts' == get_option( 'show_on_front' ) || 'nothing' == get_option( 'show_on_front' ) ) ) || is_front_page();
+}
 
 
 /**
 * Check if we are displaying posts lists or front page
 *
-* @since Customizr 3.0.6
-*
 */
-function czr_fn_is_home() {
+function czr_fn_is_real_home() {
   //get info whether the front page is a list of last posts or a page
   return ( is_home() && ( 'posts' == get_option( 'show_on_front' ) || 'nothing' == get_option( 'show_on_front' ) ) )
     || ( 0 == get_option( 'page_on_front' ) && 'page' == get_option( 'show_on_front' ) )//<= this is the case when the user want to display a page on home but did not pick a page yet
@@ -1120,7 +1200,7 @@ function czr_fn_wp_title( $title, $sep ) {
 
     // Add the site description for the home/front page.
     $site_description = get_bloginfo( 'description' , 'display' );
-    if ( $site_description && czr_fn_is_home() )
+    if ( $site_description && czr_fn_is_real_home() )
       $title = "$title $sep $site_description";
 
     // Add a page number if necessary.
@@ -1162,8 +1242,23 @@ function czr_fn_is_no_results() {
 }
 
 
+
 /*-----------------------------------------------------------
-/* PREVIOUSLY IN inc/czr-init.php (class-fire-utils_settings_map.php) and core/functions.php
+/* PREVIOUSLY IN core/functions-ccat.php
+/*----------------------------------------------------------*/
+
+function czr_fn_is_list_of_posts() {
+    //must be archive or search result. Returns false if home is empty in options.
+    return apply_filters( 'czr_is_list_of_posts',
+      ! is_singular()
+      && ! is_404()
+      && ! czr_fn_is_home_empty()
+      && ! is_admin()
+    );
+}
+
+/*-----------------------------------------------------------
+/* PREVIOUSLY IN inc/czr-init-ccat.php (class-fire-utils_settings_map.php) and core/functions-ccat.php
 /*----------------------------------------------------------*/
 
 
@@ -1208,6 +1303,10 @@ function czr_fn_slider_choices() {
 }
 
 
+
+/***************************************************************
+* CUSTOMIZER ACTIVE CALLBACKS
+***************************************************************/
 /**
 * active callback of section 'customizr_go_pro'
 * @return  bool
@@ -1215,6 +1314,7 @@ function czr_fn_slider_choices() {
 function czr_fn_pro_section_active_cb() {
     return ! czr_fn_isprevdem();
 }
+
 
 
 
@@ -1392,11 +1492,77 @@ function czr_fn_get_social_networks( $output_type = 'string' ) {
 
 /**
 * helper
-* Prints the social links
+* Prints the social links. Used as partial refresh callback
 * @return  void
 */
 if ( ! function_exists( 'czr_fn_print_social_links' ) ) {
     function czr_fn_print_social_links() {
-        echo czr_fn_get_social_networks();
+        if ( ! czr_fn_is_ms() ) {
+          echo czr_fn_get_social_networks();
+        } else {
+          czr_fn_render_template( 'modules/common/social_block' );
+        }
     }
 }
+
+/* HELPER FOR CHECKBOX OPTIONS */
+//the new options use 1 and 0
+function czr_fn_is_checked( $opt_name = '') {
+    $val = czr_fn_opt( $opt_name );
+    //cast to string if array
+    $val = is_array($val) ? $val[0] : $val;
+    return czr_fn_booleanize_checkbox_val( $val );
+}
+
+function czr_fn_booleanize_checkbox_val( $val ) {
+    if ( ! $val )
+      return false;
+    if ( is_bool( $val ) && $val )
+      return true;
+    switch ( (string) $val ) {
+      case 'off':
+      case '' :
+      case 'false' :
+        return false;
+      case 'on':
+      case '1' :
+      case 'true' :
+        return true;
+      default : return false;
+    }
+}
+
+if ( ! function_exists( 'czr_fn_text_truncate' ) ):
+  /**
+  * Helper
+  * Returns the passed text truncated at $text_length char.
+  * with the $more text added
+  *
+  * @return string
+  *
+  */
+  function czr_fn_text_truncate( $text, $max_text_length, $more, $strip_tags = true ) {
+      if ( ! $text )
+          return '';
+
+      if ( $strip_tags )
+        $text       = strip_tags( $text );
+
+      if ( ! $max_text_length )
+          return $text;
+
+      $end_substr = $text_length = strlen( $text );
+      if ( $text_length > $max_text_length ) {
+          $text      .= ' ';
+          $end_substr = strpos( $text, ' ' , $max_text_length);
+          $end_substr = ( FALSE !== $end_substr ) ? $end_substr : $max_text_length;
+          $text       = trim( substr( $text , 0 , $end_substr ) );
+      }
+
+      if ( $more && $end_substr < $text_length )
+        return $text . ' ' .$more;
+
+      return $text;
+
+  }
+endif;

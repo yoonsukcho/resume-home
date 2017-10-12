@@ -8,12 +8,10 @@ Most important : enjoy it!
 
 
 ######## Demo, Documentation, FAQs and Support #########
-* DEMO : http://demo.presscustomizr.com/
+* DEMO : https://demo.presscustomizr.com/
 * DOCUMENTATION : http://docs.presscustomizr.com/collection/76-customizr-theme
 * FAQs : http://docs.presscustomizr.com/category/90-faq-and-common-issues
-* SUPPORT : https://wordpress.org/support/theme/customizr
-* SNIPPETS : http://presscustomizr.com/code-snippets/
-* HOOKS API : http://presscustomizr.com/customizr/hooks-api/
+* SUPPORT FORUM : https://wordpress.org/support/theme/customizr
 
 
 
@@ -40,6 +38,92 @@ The exceptions to this license are as follows:
 
 
 #######################  Changelog ######################
+= 4.0.9 October 9th 2017 =
+* Fix : global skin CSS not printed when no custom header skin. Fixes #1215.
+* Fix : various html fixes like duplicated ids or data attributes
+* Fix : featured pages not translated by wpml. Fixes #1205
+* Fix : don't update the defaults when wp_installing()
+* Fix : preview error on singulars. Fixes #1194
+* Fix : typo in customizer controls
+* Fix : slider caption elements, default Fittext minsizes too high. Fixes #1191
+* Fix : link whole slide not including the caption. Fixes #1140
+* Fix : colors of the search form in dark overlay. Fixes #1185
+* Fix : closing slide's title h1 html tag. Fixes #1188
+* Fix : hamburger too dark on hover. fixes #1200
+* Fix : hamburger lines taking a 2px height randomly
+* Fix : logo / title stays shrinked when slowly scrolling up. fixes #1199. fixes #1192
+* Imp : slider bullets closer to the bottom and margin set in em
+* Imp : improve ol/ul margins in .tc-content-inner (.entry-content). Fixes #1183. Also slightly improve the cite element style.
+* Imp : set shrinked logo height with max-height instead of height => to inherit the animation
+* Imp : snaked submenu caret moved and rotated on the relevant side when "snaking"
+* Updated : footer credit links to customizr theme page instead of presscustomizr home page
+* Added : header custom back/fore-ground color options in modern style
+
+= 4.0.8 September 17th 2017 =
+* Fix: handle user's singular featured image height in singular. Fixes #1166.
+* Fix: correct horizontal positioning of the primary navbar menu. Fixes #1175.
+* Fix: fix slider textual fields wrong truncation. Fixes #1168.
+* Imp : Gallery img sizes. Fixes #1165.
+* Imp : improved customizer js code
+* Updated : about admin page
+
+= 4.0.7 September 7th 2017 =
+* Fix: menu centered wrongly displayed in ie/edge. Fixes #1163
+* Fix: Menu centered in desktop => scrolling up and down close to top is not well handled. Fixes #1161
+* Fix: RTL : search icon not properly left aligned on full screen search. Fixes #1159
+* Imp: Submenus items on mouse hover - reveal faster. Fixes #1154
+
+= 4.0.6 August 31st 2017 =
+* Fix: add menu btn was not shown when secondary menu associated but no sidenav shown. fixes #1125
+* Fix: fix singular thumbnail vertical spacing. fixes #1127
+* Fix: fix tagline cut off. fixes #1128
+* Fix: fp imgs always centered, fix handling slider not js centered
+* Fix: js-centering class to the classical grid figure to better target them in js
+* Fix: fix author meta displaying nicename instead of displayname. fixes #1148
+* Imp: allow search full page close on escape key pressed
+* Imp: implement new form style. fixes #1122
+* Imp: add entry-media__holder class to the grid figure (homogeneity)
+
+= 4.0.5 August 2nd 2017 =
+* Fix: fix woocommerce generatinc php notice. fixes #1120
+* Fix: fix CSS conflict with ui-datepicker-calendar. fixes #1123
+* Fix: sticky logo option was not displayed in the customizer. fixes #1119
+* Fix: display notice for socials in header in the right context. fixes #1118
+
+= 4.0.4 July 26th 2017 =
+* Fix: fix fp noy showing up in old php versions
+* Fix: Fix slider loader gif path can be parsed by Google bots
+* Fix: Potential submenu viewport overflow in firefox when fading fixes #1083
+* Fix: fix missing max-width style for logo w forced dims fixes #1101
+* Fix: same indentation for ul and ol
+* Fix: fix sidebars list widgets indetation + various rtl fixes
+* Fix: CSS handling of screen reader text fixes #1103 bullet 3
+* Imp: code improvements related to the post lists layout dependency
+* Imp: add menu button if not menu visible in the header
+* Imp: allow loading magnific-popup js in footer and minified
+* Add: add magnific popup js minified version
+* Add: an option to make the dark overlay optional in the modern style slider
+
+= 4.0.3 July 24th 2017 =
+* Fix: fix grid 1 column max height fixes #1088
+* Fix: submenus not sensible to the hover while fading + correctly handle the header z-index (user option)
+
+= 4.0.2 July 23rd 2017 =
+* fixed : child theme stylesheet wrongly enqueued
+* Imp: main content mobile blocks reorder via flexbox
+* Imp: fix comments date alignment fixes #1073
+
+= 4.0.1 July 23rd 2017 =
+* Fix : WooCommerce compatibility : Grid title truncation might affect products in product archives ( fixes #996 )
+* Fix : Added back the menu locations customizer section
+* Fix : grid caption background issue on mouse hover
+* Fix : fix non existing function as __ID filter callback
+* Added : style option in the customizer
+
+= 3.5.18 June 20th 2017 =
+* Fix: in singulars, no full width featured image if slider on fixes #988
+* Fix: typo producing Class 'CZR__' not found in classical retro compat
+
 = 3.5.17 June 18th 2017 =
 * Fix: fix access to undefined tc_rectangular_size class property fixes #971
 * Fix: typo producing Class 'CZR__' not found in classical retro compat fixes #972
@@ -54,12 +138,12 @@ The exceptions to this license are as follows:
 * Fix: fix menu center resulting aligned to the left on IE fixes #944
 * Fix: fix position of structural hook __before_main_container
 * Fix: fix fpc-container alignment when in #content
-* Fix: by default the loop model should not register the loop item model if 
+* Fix: by default the loop model should not register the loop item model if
 * Fix: remove old theme favicon control - is handled in js fixes #954
 * Fix: remove new lines at the end of czr_ classes fixes #957
 * Imp: improve classical grid CSS
 * Imp: fp and grid images always js centered
-* Add: modern-style - add related posts options for single post
+* Add: add related posts options for single post
 
 = 3.5.14 June 9th 2017 =
 * fix: use of the add_editor_style wp function : needs relative paths fixes #926
